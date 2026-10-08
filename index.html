@@ -21,7 +21,7 @@
      sceglie "Accetta" nel banner dei cookie (vedi #cookieBanner più in
      basso). La scelta è ricordata nel browser (localStorage); il link
      "Cookie" nel footer permette di cambiarla in ogni momento.
-     Gli ID sono gli stessi di prima: Clarity w5h1d2y1la, GA4 G-NBMV13VE1L.
+     ID: Clarity yudv7ahy4e (nuovo progetto, ottobre 2026), GA4 G-KF1LWELDG7.
      ============================================================ -->
 <script>
 (function () {
@@ -46,16 +46,16 @@
             c[a] = c[a] || function () { (c[a].q = c[a].q || []).push(arguments); };
             t = l.createElement(r); t.async = 1; t.src = "https://www.clarity.ms/tag/" + i;
             y = l.getElementsByTagName(r)[0]; y.parentNode.insertBefore(t, y);
-        })(window, document, "clarity", "script", "w5h1d2y1la");
+        })(window, document, "clarity", "script", "yudv7ahy4e");
         window.clarity('consent');
 
         // Google Analytics 4: statistiche di visita
         var g = document.createElement('script');
         g.async = true;
-        g.src = 'https://www.googletagmanager.com/gtag/js?id=G-NBMV13VE1L';
+        g.src = 'https://www.googletagmanager.com/gtag/js?id=G-KF1LWELDG7';
         document.head.appendChild(g);
         gtag('js', new Date());
-        gtag('config', 'G-NBMV13VE1L');
+        gtag('config', 'G-KF1LWELDG7');
     };
 
     // ---------------------------------------------------------------
@@ -66,7 +66,7 @@
     //     prima di ".goatcounter.com"). Finché è vuoto, GoatCounter non
     //     viene caricato e il resto funziona normalmente. <<<
     // ---------------------------------------------------------------
-    var GOATCOUNTER_CODE = '';
+    var GOATCOUNTER_CODE = 'sychro';
 
     var goatQueue = [];
     function goatSend(item) {
@@ -5439,7 +5439,7 @@ function hideDataLoadingMessage() {
 
 function loadData(attempt) {
     attempt = attempt || 1;
-    const MAX_ATTEMPTS = 3;
+    const MAX_ATTEMPTS = 5;
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyqVbLsMNPCcSue0hLVNwiO-g0RzNYcvFzfntVaiuyW41p_bKJ5PxgQojOId-YhSXuT_Q/exec';
 
     timelineData = {
@@ -5492,9 +5492,13 @@ systemdynamic,
         .catch(error => {
             console.error(`Errore nel caricamento dei dati (tentativo ${attempt}/${MAX_ATTEMPTS}):`, error);
             if (attempt < MAX_ATTEMPTS) {
-                // Riprova dopo una breve pausa: spesso è solo il "risveglio"
-                // di Google Apps Script dopo un periodo di inattività.
-                setTimeout(() => loadData(attempt + 1), 1500);
+                // Riprova dopo una pausa: spesso è solo il "risveglio" di
+                // Google Apps Script, oppure molte persone che aprono il sito
+                // nello stesso momento (es. QR code durante una presentazione).
+                // La pausa cresce a ogni tentativo e ha una parte casuale,
+                // così i visitatori non riprovano tutti insieme.
+                const wait = 1200 * attempt + Math.random() * 1500 * attempt;
+                setTimeout(() => loadData(attempt + 1), wait);
             } else {
                 showDataLoadingError();
             }
