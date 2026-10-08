@@ -974,6 +974,12 @@ window.SYCHRO_ANALYTICS_ON = true;
             z-index: 99;
         }
 
+        /* La linea del tempo attraversa anche le fasce delle righe
+           (z-index 100), restando sotto i nomi delle categorie e i popup. */
+        .vertical-line {
+            z-index: 101;
+        }
+
         .vertical-line.active {
             opacity: 1;
         }
@@ -3808,6 +3814,7 @@ body.detail-open {
                ma senza bordo colorato (quello è dell'etichetta) */
             .timeline-header {
                 position: relative;
+                z-index: auto;   /* la linea del tempo passa sopra la fascia... */
                 left: auto;
                 padding: 0;
                 margin-bottom: 0.15rem;
@@ -3819,6 +3826,7 @@ body.detail-open {
             .timeline-title {
                 visibility: visible;
                 position: sticky;
+                z-index: 102;    /* ...ma sotto il nome della categoria */
                 left: 1rem;
                 width: max-content;
                 font-size: 0.9rem;
@@ -4408,9 +4416,9 @@ body.detail-open {
                 align-items: center;
                 position: sticky;
                 left: 6px;
-                /* sopra la linea verticale del tempo (z-index 99), che così
+                /* sopra la linea verticale del tempo (z-index 101), che così
                    non attraversa i nomi delle categorie */
-                z-index: 100;
+                z-index: 102;
                 flex: 0 0 var(--side-gutter, 120px);
                 width: var(--side-gutter, 120px);
                 margin-left: calc(-1 * var(--side-gutter, 120px) - 8px);
@@ -5586,9 +5594,14 @@ function showDataLoadingError() {
         // filtri tag/cluster attivi) ne soddisfa almeno uno.
         function eventPassesFilters(data, terms) {
             if (!terms.every(t => data.searchText.includes(t))) return false;
-            if (activeFilterSet.size > 0) {
-                return data.tags.some(t => activeFilterSet.has('tag:' + t)) ||
-                       data.clusters.some(c => activeFilterSet.has('cluster:' + c));
+            // Filtri per incrocio: ogni tag e ogni cluster scelto restringe la
+            // selezione (l'evento deve averli TUTTI), come le parole chiave.
+            for (const key of activeFilterSet) {
+                const sep = key.indexOf(':');
+                const type = key.slice(0, sep);
+                const name = key.slice(sep + 1);
+                const list = type === 'tag' ? data.tags : data.clusters;
+                if (!list.includes(name)) return false;
             }
             return true;
         }
