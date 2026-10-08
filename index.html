@@ -24,6 +24,10 @@
      ID: Clarity yudv7ahy4e (nuovo progetto, ottobre 2026), GA4 G-KF1LWELDG7.
      ============================================================ -->
 <script>
+// Interruttore generale delle statistiche: true sul sito pubblico,
+// false sulla copia usata per le demo (niente banner, niente conteggi).
+window.SYCHRO_ANALYTICS_ON = true;
+
 (function () {
     var CONSENT_KEY = 'sychro-analytics-consent';
     window.dataLayer = window.dataLayer || [];
@@ -38,6 +42,7 @@
 
     // Carica Clarity e GA4 (una volta sola)
     window.sychroLoadAnalytics = function () {
+        if (!window.SYCHRO_ANALYTICS_ON) return;
         if (window.__sychroAnalyticsLoaded) return;
         window.__sychroAnalyticsLoaded = true;
 
@@ -66,7 +71,7 @@
     //     prima di ".goatcounter.com"). Finché è vuoto, GoatCounter non
     //     viene caricato e il resto funziona normalmente. <<<
     // ---------------------------------------------------------------
-    var GOATCOUNTER_CODE = 'sychro';
+    var GOATCOUNTER_CODE = window.SYCHRO_ANALYTICS_ON ? 'sychro' : '';
 
     var goatQueue = [];
     function goatSend(item) {
@@ -134,7 +139,7 @@
         "name": "SyChro – Collective Systemic Chronography",
         "alternateName": "Gli step verso un nuovo approccio di pensiero / The Steps Towards a New Thinking Approach",
         "description": "Timeline interattiva della storia del pensiero sistemico, della system dynamics, del systemic design e della sostenibilità. Interactive timeline of the history of systems thinking, system dynamics, systemic design and sustainability.",
-        "url": "https://serenatreppiedi.github.io/SystemicTimeline-V4/",
+        "url": "https://sychro-hub.github.io/SyChro4/",
         "creator": { "@type": "Person", "name": "Serena Treppiedi" },
         "author": { "@type": "Person", "name": "Serena Treppiedi" },
         "copyrightHolder": { "@type": "Person", "name": "Serena Treppiedi" },
@@ -161,7 +166,9 @@
            si muoverebbero con lo scroll/zoom orizzontale invece di restare
            ancorati allo schermo. */
         html {
-            overflow-x: scroll;
+            /* hidden (non scroll): la radice non scorre mai in orizzontale,
+               scorre solo il body, fino alla fine esatta della timeline */
+            overflow-x: hidden;
             /* niente "pagina precedente" quando con il trackpad si scorre
                oltre la fine della timeline (vedi anche il gestore wheel) */
             overscroll-behavior-x: none;
@@ -201,14 +208,13 @@
             body {
                 touch-action: pan-x pan-y;
             }
+        }
 
-            html {
-                overflow-x: hidden;
-            }
-
-            .timeline-container {
-                overflow-x: clip;
-            }
+        /* Niente all'interno della timeline (popup vicini al bordo, anelli
+           animati, etichette dell'ultimo anno...) può allargare l'area
+           scorrevole oltre la sua fine, su nessun dispositivo. */
+        .timeline-container {
+            overflow-x: clip;
         }
 
         /* Nasconde la scrollbar orizzontale nativa (solo visivamente):
@@ -945,6 +951,13 @@
         .event:hover .event-popup {
             opacity: 1;
             visibility: visible;
+        }
+
+        /* Il pallino sotto il mouse sale sempre sopra a tutto, anche quando
+           filtri o cluster gli danno un livello più basso: altrimenti il suo
+           popup finiva sotto le fasce grigie delle righe vicine. */
+        .timeline-events .event:hover {
+            z-index: 300001 !important;
         }
 
 
@@ -6544,11 +6557,7 @@ window.addEventListener('wheel', function(e) {
     e.preventDefault();
     // deltaMode 1 = righe (es. Firefox con mouse): le converte in pixel
     const delta = e.deltaMode === 1 ? e.deltaY * 32 : e.deltaY;
-    const before = scroller.scrollLeft;
     scroller.scrollLeft += delta;
-    if (scroller.scrollLeft === before && document.scrollingElement) {
-        document.scrollingElement.scrollLeft += delta;
-    }
 }, { passive: false });
 
         function applyZoom() {
@@ -7445,6 +7454,12 @@ if (document.fonts && document.fonts.ready) document.fonts.ready.then(updateSide
 (function () {
     const banner = document.getElementById('cookieBanner');
     if (!banner) return;
+    // statistiche spente: niente banner e niente link "Cookie" nel footer
+    if (!window.SYCHRO_ANALYTICS_ON) {
+        banner.remove();
+        document.querySelectorAll('#cookieSettingsLink, .cookie-sep').forEach(el => el.remove());
+        return;
+    }
     const text = document.getElementById('cookieBannerText');
     const accept = document.getElementById('cookieAccept');
     const reject = document.getElementById('cookieReject');
@@ -7850,10 +7865,12 @@ document.addEventListener('mouseover', function (e) {
     popup.style.transform = '';
     requestAnimationFrame(() => {
         const rect = popup.getBoundingClientRect();
-        const bodyRect = document.body.getBoundingClientRect();
-        const margin = 12;
-        const minX = Math.max(0, bodyRect.left) + margin;
-        const maxX = Math.min(window.innerWidth, bodyRect.right) - margin;
+        // limiti: lo schermo E la timeline (oltre il suo bordo il popup
+        // verrebbe tagliato, vedi overflow-x: clip su .timeline-container)
+        const box = (eventEl.closest('.timeline-container') || document.body).getBoundingClientRect();
+        const margin = 8;
+        const minX = Math.max(0, box.left) + margin;
+        const maxX = Math.min(window.innerWidth, box.right) - margin;
         let shift = 0;
         if (rect.left < minX) {
             shift = minX - rect.left;
